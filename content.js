@@ -264,6 +264,14 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     case "hoverColor":
       // The background script sends the hover color
       hoverColor = message.data;
+      // Call the highlightElement function with the hovered element and the new color as arguments, if the hovered element is not null and the record mode is enabled
+      if (hoveredElement && recordMode) {
+        highlightElement(hoveredElement, hoverColor);
+      }
+      // If there are any existing annotations, call the displayAnnotations function to redisplay them with the new color
+      if (annotations.length > 0) {
+        displayAnnotations();
+      }
       break;
   }
 });

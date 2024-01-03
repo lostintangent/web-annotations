@@ -1,16 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "Annotation Extension",
+  "name": "Web Annotations",
   "version": "1.0",
   "description": "A Chrome extension that allows displaying and adding/import/exporting annotations on top of the current web page.",
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs"
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Annotation Extension"
+    "default_title": "Web Annotations"
   },
   "background": {
     "service_worker": "background.js"

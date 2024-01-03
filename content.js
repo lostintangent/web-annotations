@@ -174,6 +174,8 @@ function handleRecordModeClick(e) {
           };
           // Send a message to the background script to add the annotation
           chrome.runtime.sendMessage({type: "addAnnotation", data: annotation});
+          annotations.push(message.data); // update the annotations array
+          displayAnnotations(); 
     }
   }
 }

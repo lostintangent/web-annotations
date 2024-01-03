@@ -1,0 +1,27 @@
+<!-- The HTML file that defines the layout of the popup page. -->
+
+<html>
+<head>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="container">
+    <h1>Annotation Extension</h1>
+    <div id="record-mode">
+      <input type="checkbox" id="record-mode-checkbox">
+      <label for="record-mode-checkbox">Record mode</label>
+    </div>
+    <div id="annotation-list">
+      <ul id="annotation-list-ul">
+        <!-- The list of annotations will be dynamically populated by the popup.js script -->
+      </ul>
+    </div>
+    <div id="annotation-buttons">
+      <button id="export-button">Export</button>
+      <button id="import-button">Import</button>
+      <input type="file" id="import-file" accept="application/json" hidden>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

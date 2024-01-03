@@ -66,6 +66,22 @@ function createSpan(annotation) {
       document.removeEventListener("click", handler);
     });
   });
+  // Add an event listener for the mouseenter event on the span element
+  span.addEventListener("mouseenter", function() {
+    // Call the highlightElement function with the element that the annotation refers to and the hover color as arguments
+    let element = document.querySelector(annotation.selector);
+    if (element) {
+      highlightElement(element, hoverColor);
+    }
+  });
+  // Add an event listener for the mouseleave event on the span element
+  span.addEventListener("mouseleave", function() {
+    // Call the unhighlightElement function with the element that the annotation refers to as an argument
+    let element = document.querySelector(annotation.selector);
+    if (element) {
+      unhighlightElement(element);
+    }
+  });
   return span;
 }
 
@@ -197,6 +213,18 @@ function getCssSelector(element) {
   }
   // Return the selector of the parent element, followed by the tag name and the index in parentheses
   return getCssSelector(element.parentElement) + " > " + element.tagName + ":nth-of-type(" + index + ")";
+}
+
+// A function to highlight an element with a given color
+function highlightElement(element, color) {
+  // Set the element's outline to a 5px solid border with the given color
+  element.style.outline = "5px solid " + color;
+}
+
+// A function to unhighlight an element
+function unhighlightElement(element) {
+  // Remove the element's outline
+  element.style.outline = "";
 }
 
 // Add event listeners to the document to handle the record mode click and hover

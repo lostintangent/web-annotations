@@ -65,3 +65,14 @@ button {
 .annotation-context-menu-option:hover {
   background-color: lightgray;
 }
+
+/* Add a CSS rule to style the label element with a margin and a font-weight */
+label {
+  margin: 10px;
+  font-weight: bold;
+}
+
+/* Add a CSS rule to style the selected class name with a black border */
+.selected {
+  border: 2px solid black;
+}

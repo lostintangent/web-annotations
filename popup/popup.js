@@ -177,6 +177,7 @@ hoverColorPicker.addEventListener("click", function(e) {
   // If the user clicks on a color option, get the color from the data attribute and call the handleHoverColorChange function
   if (e.target.classList.contains("color-option")) {
     let color = e.target.dataset.color;
+    updateHoverColorPicker(color);
     handleHoverColorChange(color);
   }
 });

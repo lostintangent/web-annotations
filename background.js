@@ -156,3 +156,19 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       break;
   }
 });
+
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+  recordMode = false;
+  
+  // Check if the tab status is "complete"
+  if (changeInfo.status === "complete") {
+    console.log("Tab updated: ", tab.url);
+    // Get the tab URL and filter the annotations array by the URL
+    let url = tab.url;
+    let filteredAnnotations = annotations.filter(item => item.url === url);
+    // Send the filtered annotations to the content script of the updated tab
+    chrome.tabs.sendMessage(tabId, {type: "annotations", data: filteredAnnotations});
+    // Send the hover color to the content script of the updated tab
+    chrome.tabs.sendMessage(tabId, {type: "hoverColor", data: hoverColor});
+  }
+});

@@ -9,6 +9,9 @@ let recordMode = false;
 // A variable to store the color palette as an array of strings
 let colors = ["red", "green", "blue", "yellow", "pink", "cyan"];
 
+// A variable to store the currently hovered element
+let hoveredElement = null;
+
 // A function to create a span element for each annotation
 function createSpan(annotation) {
   let span = document.createElement("span");
@@ -129,6 +132,10 @@ function handleRecordModeClick(e) {
   // If the record mode is enabled and the user clicks on an element, show a prompt to enter the annotation text
   if (recordMode) {
     e.stopPropagation();
+    // Remove the outline from the hovered element
+    if (hoveredElement) {
+      hoveredElement.style.outline = "";
+    }
     let text = prompt("Enter the annotation text:");
     if (text) {
       // If the user enters a text, show a color picker to choose the annotation color
@@ -164,6 +171,22 @@ function handleRecordModeClick(e) {
   }
 }
 
+// A function to handle the record mode hover
+function handleRecordModeHover(e) {
+  // If the record mode is enabled and the user hovers over an element, show a blue rectangle around the element
+  if (recordMode) {
+    // If the hovered element is different from the previous one, remove the outline from the previous element and add a blue outline to the hovered element
+    if (e.target !== hoveredElement) {
+      if (hoveredElement) {
+        hoveredElement.style.outline = "";
+      }
+      e.target.style.outline = "5px solid blue";
+      // Update the variable to store the new hovered element
+      hoveredElement = e.target;
+    }
+  }
+}
+
 // A function to get the CSS selector of an element
 function getCssSelector(element) {
   // If the element has an id, return the id selector
@@ -187,8 +210,9 @@ function getCssSelector(element) {
   return getCssSelector(element.parentElement) + " > " + element.tagName + ":nth-of-type(" + index + ")";
 }
 
-// Add an event listener to the document to handle the record mode click
+// Add event listeners to the document to handle the record mode click and hover
 document.addEventListener("click", handleRecordModeClick);
+document.addEventListener("mouseover", handleRecordModeHover);
 
 // Listen for messages from the background script
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {

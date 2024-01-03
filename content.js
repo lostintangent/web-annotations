@@ -6,20 +6,17 @@ let annotations = [];
 // A variable to store the record mode status as a boolean
 let recordMode = false;
 
-// A variable to store the color palette as an array of strings
-let colors = ["red", "green", "blue", "yellow", "pink", "cyan"];
+// A variable to store the hover color as a string
+let hoverColor = "blue"; // default value
 
 // A variable to store the currently hovered element
 let hoveredElement = null;
-
-// A variable to store the hover color as a string
-let hoverColor = "blue"; // default value
 
 // A function to create a span element for each annotation
 function createSpan(annotation) {
   let span = document.createElement("span");
   span.className = "annotation-span";
-  span.style.backgroundColor = annotation.color;
+  span.style.backgroundColor = hoverColor;
   span.style.position = "absolute";
   span.style.zIndex = "9999";
   span.style.padding = "5px";
@@ -27,7 +24,7 @@ function createSpan(annotation) {
   span.textContent = annotation.text;
   span.dataset.url = annotation.url;
   span.dataset.selector = annotation.selector;
-  span.dataset.color = annotation.color;
+  span.dataset.color = hoverColor;
   span.addEventListener("click", function(e) {
     // When the user clicks on an annotation, show a tooltip with options to edit or remove the annotation
     e.stopPropagation();
@@ -135,41 +132,22 @@ function handleRecordModeClick(e) {
   // If the record mode is enabled and the user clicks on an element, show a prompt to enter the annotation text
   if (recordMode) {
     e.stopPropagation();
+    e.preventDefault();
     // Remove the outline from the hovered element
     if (hoveredElement) {
       hoveredElement.style.outline = "";
+      hoveredElement = null;
     }
     let text = prompt("Enter the annotation text:");
     if (text) {
-      // If the user enters a text, show a color picker to choose the annotation color
-      let colorPicker = createColorPicker();
-      colorPicker.style.left = e.pageX + "px";
-      colorPicker.style.top = e.pageY + "px";
-      document.body.append(colorPicker);
-      // Add an event listener to the color picker to handle the color selection
-      colorPicker.addEventListener("click", function handler(e) {
-        // If the user clicks on a color option, create a new annotation object with the text, color, URL, and selector of the element
-        if (e.target.classList.contains("color-option")) {
-          let color = e.target.dataset.color;
+      const selector = getCssSelector(e.target)
           let annotation = {
-            text: text,
-            color: color,
+            text,
             url: window.location.href,
-            selector: getCssSelector(e.target)
+            selector
           };
           // Send a message to the background script to add the annotation
           chrome.runtime.sendMessage({type: "addAnnotation", data: annotation});
-          // Remove the color picker
-          colorPicker.remove();
-          // Remove the event listener
-          colorPicker.removeEventListener("click", handler);
-        }
-      });
-      // Remove the color picker when the user clicks anywhere else
-      document.addEventListener("click", function handler() {
-        colorPicker.remove();
-        document.removeEventListener("click", handler);
-      });
     }
   }
 }
@@ -195,6 +173,14 @@ function getCssSelector(element) {
   // If the element has an id, return the id selector
   if (element.id) {
     return "#" + element.id;
+  }
+  if (element.classList) {
+    for (let className of element.classList) {
+      const matches = document.querySelectorAll("." + className);
+      if (matches && matches.length === 1) {
+        return "." + className;
+      }
+    }
   }
   // If the element is the body, return the tag name
   if (element.tagName === "BODY") {
@@ -226,8 +212,14 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       displayAnnotations();
       break;
     case "recordMode":
+      if (recordMode && !message.data && hoveredElement) {
+        hoveredElement.style.outline = "";
+        hoveredElement = null;
+      }
+
       // The background script sends the record mode status
       recordMode = message.data;
+      
       break;
     case "hoverColor":
       // The background script sends the hover color

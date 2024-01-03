@@ -85,11 +85,21 @@ function createSpan(annotation) {
   return span;
 }
 
-// A function to position the span element relative to the element that the annotation refers to
+const ANNOTATION_MARGIN = 5;
 function positionSpan(span, element) {
-  let rect = element.getBoundingClientRect();
-  span.style.left = rect.left + window.scrollX + "px";
-  span.style.top = rect.top + window.scrollY - span.offsetHeight - 5 + "px";
+  const rect = element.getBoundingClientRect();
+  const leftPosition = rect.left + window.scrollX;
+
+  const availableSpace = rect.top - span.offsetHeight + ANNOTATION_MARGIN;
+  let topPosition;
+  if (availableSpace > 0) {
+    topPosition = rect.top - span.offsetHeight - ANNOTATION_MARGIN;
+  } else {
+    topPosition = rect.bottom + ANNOTATION_MARGIN;
+  }
+
+  span.style.top = `${topPosition}px`;
+  span.style.left = `${leftPosition}px`;
 }
 
 // A function to display the annotations on the web page

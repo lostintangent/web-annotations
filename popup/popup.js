@@ -1,6 +1,5 @@
 // The JavaScript file that handles the logic of the popup page, such as adding event listeners to the buttons and sending messages to the background script.
 
-// A variable to store the color palette as an array of strings
 let colors = ["red", "green", "blue", "yellow", "pink", "cyan"];
 
 // A function to create a list item element for each annotation

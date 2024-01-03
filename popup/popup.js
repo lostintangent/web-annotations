@@ -1,5 +1,8 @@
 // The JavaScript file that handles the logic of the popup page, such as adding event listeners to the buttons and sending messages to the background script.
 
+// A variable to store the color palette as an array of strings
+let colors = ["red", "green", "blue", "yellow", "pink", "cyan"];
+
 // A function to create a list item element for each annotation
 function createListItem(annotation) {
   let li = document.createElement("li");
@@ -117,12 +120,71 @@ function handleRecordModeCheckboxChange() {
   chrome.runtime.sendMessage({type: "toggleRecordMode"});
 }
 
+// A function to create a color picker element for the hover rectangle color
+function createHoverColorPicker() {
+  let colorPicker = document.createElement("div");
+  colorPicker.id = "hover-color-picker";
+  colorPicker.style.display = "flex";
+  colorPicker.style.flexWrap = "wrap";
+  colorPicker.style.width = "100px";
+  colorPicker.style.border = "1px solid gray";
+  colorPicker.style.backgroundColor = "white";
+  // Create and append a color option element for each color in the palette
+  for (let color of colors) {
+    let colorOption = document.createElement("div");
+    colorOption.className = "color-option";
+    colorOption.style.width = "20px";
+    colorOption.style.height = "20px";
+    colorOption.style.backgroundColor = color;
+    colorOption.dataset.color = color;
+    colorPicker.append(colorOption);
+  }
+  return colorPicker;
+}
+
+// A function to handle the hover color change
+function handleHoverColorChange(color) {
+  // Send a message to the background script to set the hover color
+  chrome.runtime.sendMessage({type: "setHoverColor", data: color});
+}
+
+// A function to update the hover color picker with the selected color
+function updateHoverColorPicker(color) {
+  let colorPicker = document.getElementById("hover-color-picker");
+  // Find the color option that matches the color and add the selected class to it
+  let colorOption = colorPicker.querySelector(`[data-color="${color}"]`);
+  if (colorOption) {
+    colorOption.classList.add("selected");
+  }
+  // Remove the selected class from any other color option
+  let otherOptions = colorPicker.querySelectorAll(`[data-color]:not([data-color="${color}"])`);
+  for (let option of otherOptions) {
+    option.classList.remove("selected");
+  }
+}
+
 // Add event listeners to the buttons and the checkbox
 document.getElementById("export-button").addEventListener("click", handleExportButtonClick);
 document.getElementById("import-button").addEventListener("click", handleImportButtonClick);
 document.getElementById("import-file").addEventListener("change", handleFileInputChange);
 document.getElementById("record-mode-checkbox").addEventListener("change", handleRecordModeCheckboxChange);
 
+// Create and append the hover color picker element
+let hoverColorPicker = createHoverColorPicker();
+document.getElementById("hover-color").append(hoverColorPicker);
+
+// Add an event listener to the hover color picker to handle the color selection
+hoverColorPicker.addEventListener("click", function(e) {
+  // If the user clicks on a color option, get the color from the data attribute and call the handleHoverColorChange function
+  if (e.target.classList.contains("color-option")) {
+    let color = e.target.dataset.color;
+    handleHoverColorChange(color);
+  }
+});
+
 // Request the annotations and the record mode status from the background script
 chrome.runtime.sendMessage({type: "getAnnotations"}, populateAnnotationList);
 chrome.runtime.sendMessage({type: "getRecordMode"}, updateRecordModeCheckbox);
+
+// Request the hover color from the background script and update the hover color picker accordingly
+chrome.runtime.sendMessage({type: "getHoverColor"}, updateHoverColorPicker);

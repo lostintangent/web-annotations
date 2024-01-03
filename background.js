@@ -10,6 +10,9 @@ let annotations = [];
 // A variable to store the record mode status as a boolean
 let recordMode = false;
 
+// A variable to store the hover color as a string
+let hoverColor = "blue"; // default value
+
 // A function to save the annotations to the local storage
 function saveAnnotations() {
   chrome.storage.local.set({annotations: annotations}, function() {
@@ -27,10 +30,34 @@ function loadAnnotations() {
   });
 }
 
+// A function to save the hover color to the local storage
+function saveHoverColor() {
+  chrome.storage.local.set({hoverColor: hoverColor}, function() {
+    console.log("Hover color saved.");
+  });
+}
+
+// A function to load the hover color from the local storage
+function loadHoverColor() {
+  chrome.storage.local.get("hoverColor", function(result) {
+    if (result.hoverColor) {
+      hoverColor = result.hoverColor;
+      console.log("Hover color loaded.");
+    }
+  });
+}
+
 // A function to send the annotations to the content script of the current tab
 function sendAnnotations() {
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     chrome.tabs.sendMessage(tabs[0].id, {type: "annotations", data: annotations});
+  });
+}
+
+// A function to send the hover color to the content script of the current tab
+function sendHoverColor() {
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.sendMessage(tabs[0].id, {type: "hoverColor", data: hoverColor});
   });
 }
 
@@ -69,8 +96,9 @@ function importAnnotations(file) {
   reader.readAsText(file);
 }
 
-// Load the annotations when the background script is loaded
+// Load the annotations and the hover color when the background script is loaded
 loadAnnotations();
+loadHoverColor();
 
 // Listen for messages from the popup or the content scripts
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
@@ -99,11 +127,13 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       // The content script adds an annotation
       annotations.push(message.data);
       saveAnnotations();
+      sendHoverColor(); // send the hover color after adding an annotation
       break;
     case "removeAnnotation":
       // The content script removes an annotation
       annotations = annotations.filter(item => item !== message.data);
       saveAnnotations();
+      sendHoverColor(); // send the hover color after removing an annotation
       break;
     case "editAnnotation":
       // The content script edits an annotation
@@ -111,7 +141,18 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       if (index !== -1) {
         annotations[index] = message.data.new;
         saveAnnotations();
+        sendHoverColor(); // send the hover color after editing an annotation
       }
+      break;
+    case "getHoverColor":
+      // The popup requests the hover color
+      sendResponse(hoverColor);
+      break;
+    case "setHoverColor":
+      // The popup sets the hover color
+      hoverColor = message.data;
+      saveHoverColor();
+      sendHoverColor();
       break;
   }
 });

@@ -12,6 +12,9 @@ let colors = ["red", "green", "blue", "yellow", "pink", "cyan"];
 // A variable to store the currently hovered element
 let hoveredElement = null;
 
+// A variable to store the hover color as a string
+let hoverColor = "blue"; // default value
+
 // A function to create a span element for each annotation
 function createSpan(annotation) {
   let span = document.createElement("span");
@@ -173,14 +176,14 @@ function handleRecordModeClick(e) {
 
 // A function to handle the record mode hover
 function handleRecordModeHover(e) {
-  // If the record mode is enabled and the user hovers over an element, show a blue rectangle around the element
+  // If the record mode is enabled and the user hovers over an element, show a rectangle around the element with the selected hover color
   if (recordMode) {
-    // If the hovered element is different from the previous one, remove the outline from the previous element and add a blue outline to the hovered element
+    // If the hovered element is different from the previous one, remove the outline from the previous element and add an outline with the hover color to the hovered element
     if (e.target !== hoveredElement) {
       if (hoveredElement) {
         hoveredElement.style.outline = "";
       }
-      e.target.style.outline = "5px solid blue";
+      e.target.style.outline = "5px solid " + hoverColor; // use the hover color variable instead of the hardcoded value "blue"
       // Update the variable to store the new hovered element
       hoveredElement = e.target;
     }
@@ -225,6 +228,10 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     case "recordMode":
       // The background script sends the record mode status
       recordMode = message.data;
+      break;
+    case "hoverColor":
+      // The background script sends the hover color
+      hoverColor = message.data;
       break;
   }
 });

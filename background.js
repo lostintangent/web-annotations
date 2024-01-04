@@ -20,30 +20,10 @@ function saveAnnotations() {
   });
 }
 
-// A function to load the annotations from the local storage
-function loadAnnotations() {
-  chrome.storage.local.get("annotations", function(result) {
-    if (result.annotations) {
-      annotations = result.annotations;
-      console.log("Annotations loaded.");
-    }
-  });
-}
-
 // A function to save the hover color to the local storage
 function saveHoverColor() {
   chrome.storage.local.set({hoverColor: hoverColor}, function() {
     console.log("Hover color saved.");
-  });
-}
-
-// A function to load the hover color from the local storage
-function loadHoverColor() {
-  chrome.storage.local.get("hoverColor", function(result) {
-    if (result.hoverColor) {
-      hoverColor = result.hoverColor;
-      console.log("Hover color loaded.");
-    }
   });
 }
 
@@ -96,9 +76,22 @@ function importAnnotations(file) {
   reader.readAsText(file);
 }
 
+// A function to load the annotations and the hover color from the local storage
+function loadData() {
+  chrome.storage.local.get(["annotations", "hoverColor"], function(result) {
+    if (result.annotations) {
+      annotations = result.annotations;
+      console.log("Annotations loaded.");
+    }
+    if (result.hoverColor) {
+      hoverColor = result.hoverColor;
+      console.log("Hover color loaded.");
+    }
+  });
+}
+
 // Load the annotations and the hover color when the background script is loaded
-loadAnnotations();
-loadHoverColor();
+loadData();
 
 // Listen for messages from the popup or the content scripts
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {

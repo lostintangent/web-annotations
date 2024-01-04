@@ -180,19 +180,18 @@ function handleRecordModeClick(e) {
   }
 }
 
-// A function to handle the record mode hover
 function handleRecordModeHover(e) {
-  // If the record mode is enabled and the user hovers over an element, show a rectangle around the element with the selected hover color
   if (recordMode) {
-    // If the hovered element is different from the previous one, remove the outline from the previous element and add an outline with the hover color to the hovered element
-    if (e.target !== hoveredElement) {
-      if (hoveredElement) {
-        hoveredElement.style.outline = "";
-      }
-      e.target.style.outline = "5px solid " + hoverColor; // use the hover color variable instead of the hardcoded value "blue"
-      // Update the variable to store the new hovered element
-      hoveredElement = e.target;
+    if (hoveredElement && e.target !== hoveredElement) {
+      unhighlightElement(hoveredElement);
     }
+
+    if (e.target.classList.contains("annotation-span")) {
+      return;
+    }
+
+    highlightElement(e.target, hoverColor);
+    hoveredElement = e.target;
   }
 }
 

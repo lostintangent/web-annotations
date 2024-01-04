@@ -1,65 +1,73 @@
 // The background script that manages the annotation storage, communicates with the popup, and enables the record mode.
 
-// A variable to store the annotations as an array of objects with the following properties:
-// url: the URL of the web page where the annotation was made
-// text: the text content of the annotation
-// selector: the CSS selector of the element that the annotation refers to
-// color: the color of the annotation
-let annotations = [];
+// A variable to store the data object containing the annotations, recordMode, and hoverColor variables
+let data = null;
 
-// A variable to store the record mode status as a boolean
-let recordMode = false;
-
-// A variable to store the hover color as a string
-let hoverColor = "blue"; // default value
-
-// A function to save the annotations to the local storage
-function saveAnnotations() {
-  chrome.storage.local.set({annotations: annotations}, function() {
-    console.log("Annotations saved.");
+// A function to return a promise that resolves with an object containing the annotations, recordMode, and hoverColor variables
+function getData() {
+  return new Promise((resolve, reject) => {
+    // Get the annotations and the hover color from the local storage
+    chrome.storage.local.get(["annotations", "hoverColor"], function(result) {
+      // Get the record mode from the session storage
+      chrome.storage.session.get("recordMode", function(sessionResult) {
+        // Create an object with the properties "annotations", "recordMode", and "hoverColor" and resolve the promise with it
+        let data = {
+          annotations: result.annotations || [],
+          recordMode: sessionResult.recordMode || false,
+          hoverColor: result.hoverColor || "blue"
+        };
+        resolve(data);
+      });
+    });
   });
 }
 
-// A function to save the hover color to the local storage
-function saveHoverColor() {
-  chrome.storage.local.set({hoverColor: hoverColor}, function() {
-    console.log("Hover color saved.");
+// A function to load the data from the storage and store it in the global variable
+function loadData() {
+  getData().then(result => {
+    data = result;
+    console.log("Data loaded.");
   });
 }
 
-// A function to save the record mode to the session storage
-function saveRecordMode() {
-  chrome.storage.session.set({recordMode: recordMode}, function() {
+// A function to save the data to the storage
+function saveData() {
+  // Save the annotations and the hover color to the local storage
+  chrome.storage.local.set({annotations: data.annotations, hoverColor: data.hoverColor}, function() {
+    console.log("Annotations and hover color saved.");
+  });
+  // Save the record mode to the session storage
+  chrome.storage.session.set({recordMode: data.recordMode}, function() {
     console.log("Record mode saved.");
   });
 }
 
 // A function to send the annotations to the content script of the current tab
-function sendAnnotations() {
+function sendAnnotationsToContentScript() {
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, {type: "annotations", data: annotations});
+    chrome.tabs.sendMessage(tabs[0].id, {type: "annotations", data: data.annotations});
   });
 }
 
 // A function to send the hover color to the content script of the current tab
-function sendHoverColor() {
+function sendHoverColorToContentScript() {
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, {type: "hoverColor", data: hoverColor});
+    chrome.tabs.sendMessage(tabs[0].id, {type: "hoverColor", data: data.hoverColor});
   });
 }
 
 // A function to toggle the record mode and send the status to the content script of the current tab
 function toggleRecordMode() {
-  recordMode = !recordMode;
-  saveRecordMode(); // save the record mode to the session storage
+  data.recordMode = !data.recordMode;
+  saveData(); // save the data to the storage
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    chrome.tabs.sendMessage(tabs[0].id, {type: "recordMode", data: recordMode});
+    chrome.tabs.sendMessage(tabs[0].id, {type: "recordMode", data: data.recordMode});
   });
 }
 
 // A function to export the annotations as a JSON file
 function exportAnnotations() {
-  let blob = new Blob([JSON.stringify(annotations)], {type: "application/json"});
+  let blob = new Blob([JSON.stringify(data.annotations)], {type: "application/json"});
   let url = URL.createObjectURL(blob);
   chrome.downloads.download({url: url, filename: "annotations.json"});
 }
@@ -69,11 +77,11 @@ function importAnnotations(file) {
   let reader = new FileReader();
   reader.onload = function(e) {
     try {
-      let data = JSON.parse(e.target.result);
-      if (Array.isArray(data) && data.every(item => item.url && item.text && item.selector && item.color)) {
-        annotations = data;
-        saveAnnotations();
-        sendAnnotations();
+      let annotations = JSON.parse(e.target.result);
+      if (Array.isArray(annotations) && annotations.every(item => item.url && item.text && item.selector && item.color)) {
+        data.annotations = annotations;
+        saveData();
+        sendAnnotationsToContentScript();
       } else {
         throw new Error("Invalid JSON format.");
       }
@@ -84,43 +92,21 @@ function importAnnotations(file) {
   reader.readAsText(file);
 }
 
-// A function to load the annotations and the hover color from the local storage
-function loadData() {
-  chrome.storage.local.get(["annotations", "hoverColor"], function(result) {
-    if (result.annotations) {
-      annotations = result.annotations;
-      console.log("Annotations loaded.");
-    }
-    if (result.hoverColor) {
-      hoverColor = result.hoverColor;
-      console.log("Hover color loaded.");
-    }
-  });
-  // Retrieve the record mode from the session storage and set the record mode variable to the retrieved value or false if not found
-  chrome.storage.session.get("recordMode", function(result) {
-    if (result.recordMode) {
-      recordMode = result.recordMode;
-      console.log("Record mode loaded.");
-    } else {
-      recordMode = false;
-    }
-  });
-}
-
-// Load the annotations and the hover color when the background script is loaded
+// Load the data when the background script is loaded
 loadData();
 
 // Listen for messages from the popup or the content scripts
 chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
   switch (message.type) {
-    case "getAnnotations":
-      // The popup requests the annotations
-      sendResponse(annotations);
-      break;
-    case "getRecordMode":
-      // The popup requests the record mode status
-      sendResponse(recordMode);
-      break;
+    case "getData":
+      // The popup requests the data
+      // Wait for the data to be loaded and then send the response
+      getData().then(result => {
+        data = result;
+        sendResponse(data);
+      });
+      // Return true to indicate that the response will be sent asynchronously
+      return true;
     case "toggleRecordMode":
       // The popup toggles the record mode
       toggleRecordMode();
@@ -135,50 +121,46 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
       break;
     case "addAnnotation":
       // The content script adds an annotation
-      annotations.push(message.data);
-      saveAnnotations();
-      sendHoverColor(); // send the hover color after adding an annotation
+      data.annotations.push(message.data);
+      saveData();
+      sendHoverColorToContentScript(); // send the hover color after adding an annotation
       break;
     case "removeAnnotation":
       // The content script removes an annotation
-      annotations = annotations.filter(item => item !== message.data);
-      saveAnnotations();
-      sendHoverColor(); // send the hover color after removing an annotation
+      data.annotations = data.annotations.filter(item => item !== message.data);
+      saveData();
+      sendHoverColorToContentScript(); // send the hover color after removing an annotation
       break;
     case "editAnnotation":
       // The content script edits an annotation
-      let index = annotations.indexOf(message.data.old);
+      let index = data.annotations.indexOf(message.data.old);
       if (index !== -1) {
-        annotations[index] = message.data.new;
-        saveAnnotations();
-        sendHoverColor(); // send the hover color after editing an annotation
+        data.annotations[index] = message.data.new;
+        saveData();
+        sendHoverColorToContentScript(); // send the hover color after editing an annotation
       }
-      break;
-    case "getHoverColor":
-      // The popup requests the hover color
-      sendResponse(hoverColor);
       break;
     case "setHoverColor":
       // The popup sets the hover color
-      hoverColor = message.data;
-      saveHoverColor();
-      sendHoverColor();
+      data.hoverColor = message.data;
+      saveData();
+      sendHoverColorToContentScript();
       break;
   }
 });
 
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-  recordMode = false;
+  data.recordMode = false;
   
   // Check if the tab status is "complete"
   if (changeInfo.status === "complete") {
     console.log("Tab updated: ", tab.url);
     // Get the tab URL and filter the annotations array by the URL
     let url = tab.url;
-    let filteredAnnotations = annotations.filter(item => item.url === url);
+    let filteredAnnotations = data.annotations.filter(item => item.url === url);
     // Send the filtered annotations to the content script of the updated tab
     chrome.tabs.sendMessage(tabId, {type: "annotations", data: filteredAnnotations});
     // Send the hover color to the content script of the updated tab
-    chrome.tabs.sendMessage(tabId, {type: "hoverColor", data: hoverColor});
+    chrome.tabs.sendMessage(tabId, {type: "hoverColor", data: data.hoverColor});
   }
 });

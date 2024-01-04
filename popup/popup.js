@@ -182,9 +182,9 @@ hoverColorPicker.addEventListener("click", function(e) {
   }
 });
 
-// Request the annotations and the record mode status from the background script
-chrome.runtime.sendMessage({type: "getAnnotations"}, populateAnnotationList);
-chrome.runtime.sendMessage({type: "getRecordMode"}, updateRecordModeCheckbox);
-
-// Request the hover color from the background script and update the hover color picker accordingly
-chrome.runtime.sendMessage({type: "getHoverColor"}, updateHoverColorPicker);
+// Request the data from the background script and use it to populate the annotation list, the record mode checkbox, and the hover color picker
+chrome.runtime.sendMessage({type: "getData"}, function(response) {
+  populateAnnotationList(response.annotations);
+  updateRecordModeCheckbox(response.recordMode);
+  updateHoverColorPicker(response.hoverColor);
+});

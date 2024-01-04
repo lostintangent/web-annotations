@@ -27,6 +27,13 @@ function saveHoverColor() {
   });
 }
 
+// A function to save the record mode to the session storage
+function saveRecordMode() {
+  chrome.storage.session.set({recordMode: recordMode}, function() {
+    console.log("Record mode saved.");
+  });
+}
+
 // A function to send the annotations to the content script of the current tab
 function sendAnnotations() {
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
@@ -44,6 +51,7 @@ function sendHoverColor() {
 // A function to toggle the record mode and send the status to the content script of the current tab
 function toggleRecordMode() {
   recordMode = !recordMode;
+  saveRecordMode(); // save the record mode to the session storage
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     chrome.tabs.sendMessage(tabs[0].id, {type: "recordMode", data: recordMode});
   });
@@ -86,6 +94,15 @@ function loadData() {
     if (result.hoverColor) {
       hoverColor = result.hoverColor;
       console.log("Hover color loaded.");
+    }
+  });
+  // Retrieve the record mode from the session storage and set the record mode variable to the retrieved value or false if not found
+  chrome.storage.session.get("recordMode", function(result) {
+    if (result.recordMode) {
+      recordMode = result.recordMode;
+      console.log("Record mode loaded.");
+    } else {
+      recordMode = false;
     }
   });
 }

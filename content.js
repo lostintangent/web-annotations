@@ -75,7 +75,9 @@ function createSpan(annotation) {
       unhighlightElement(element);
     }
 
+    annotations = annotations.filter(item => item != annotation);
     span.remove();
+    
     chrome.runtime.sendMessage({ type: "removeAnnotation", data: annotation });
   });
 
@@ -253,6 +255,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       if (annotations.length > 0) {
         displayAnnotations();
+      }
+      break;
+
+    case "clearAnnotations": // The user has cleared the annotations
+      annotations = [];
+      const existingSpans = document.querySelectorAll(".annotation-span");
+      for (let span of existingSpans) {
+        span.remove();
       }
       break;
   }

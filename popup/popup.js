@@ -119,6 +119,11 @@ function handleRecordModeCheckboxChange() {
   chrome.runtime.sendMessage({type: "toggleRecordMode"});
 }
 
+function handleClearButtonClick() {
+  document.getElementById("annotation-list-ul").innerHTML = "";
+  chrome.runtime.sendMessage({ type: "clearAnnotations" });
+}
+
 // A function to create a color picker element for the hover rectangle color
 function createHoverColorPicker() {
   let colorPicker = document.createElement("div");
@@ -166,6 +171,7 @@ document.getElementById("export-button").addEventListener("click", handleExportB
 document.getElementById("import-button").addEventListener("click", handleImportButtonClick);
 document.getElementById("import-file").addEventListener("change", handleFileInputChange);
 document.getElementById("record-mode-checkbox").addEventListener("change", handleRecordModeCheckboxChange);
+document.getElementById("clear-button").addEventListener("click", handleClearButtonClick);
 
 let hoverColorPicker = createHoverColorPicker();
 document.getElementById("hover-color").append(hoverColorPicker);

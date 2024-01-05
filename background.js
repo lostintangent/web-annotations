@@ -94,6 +94,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       importAnnotations(message.data);
       break;
 
+    case "clearAnnotations": // The user clicked the "Clear" button
+      data.annotations = [];
+      sendMessageToContentScript("clearAnnotations");
+      updateActionButtonBadge();
+      saveData();
+      break;
+
     /*
      * Sender = Content script
      */

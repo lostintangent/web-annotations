@@ -59,11 +59,9 @@ async function updateActionButtonBadge() {
   const url = tab.url;
   const filteredAnnotations = data.annotations.filter(item => item.url === url);
 
-  chrome.action.setBadgeText({ text: filteredAnnotations.length.toString(), tabId: tab.id });
+  const text = filteredAnnotations.length > 0 ? filteredAnnotations.length.toString() : "";
+  chrome.action.setBadgeText({ text, tabId: tab.id });
   chrome.action.setBadgeBackgroundColor({ color: data.hoverColor });
-  if (filteredAnnotations.length === 0 || !url.startsWith("http")) {
-    chrome.action.setBadgeText({ text: "" });
-  }
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

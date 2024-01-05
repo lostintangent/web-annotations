@@ -110,9 +110,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case "editAnnotation": // The user just edit an annotation
-      let index = data.annotations.indexOf(message.data.old);
-      if (index !== -1) {
-        data.annotations[index] = message.data.new;
+      const annotation = data.annotations.find(item => item.url === message.data.annotation.url && item.selector === message.data.annotation.selector && item.text === message.data.annotation.text);
+      if (annotation) {
+        annotation.text = message.data.text;
         saveData();
       }
       break;

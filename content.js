@@ -16,9 +16,17 @@ function createSpan(annotation) {
   span.dataset.url = annotation.url;
   span.dataset.selector = annotation.selector;
   span.dataset.color = hoverColor;
-  span.addEventListener("click", function(e) {
-    // When the user clicks on an annotation, show a tooltip with options to edit or remove the annotation
+
+  const deleteButton = document.createElement("button");
+  deleteButton.textContent = "\u{1F5D1}"; // Wastebasket emoji
+  deleteButton.style.display = "none";
+  deleteButton.style.marginLeft = "5px";
+  deleteButton.style.cursor = "pointer";
+  span.append(deleteButton);
+
+  span.addEventListener("click", (e) => {
     e.stopPropagation();
+    
     let tooltip = document.createElement("div");
     tooltip.className = "annotation-tooltip";
     tooltip.style.left = e.pageX + "px";
@@ -34,45 +42,43 @@ function createSpan(annotation) {
         chrome.runtime.sendMessage({type: "editAnnotation", data: {old: annotation, new: {...annotation, text: newText}}});
         // Update the span text
         span.textContent = newText;
+        // Re-append the button to the span
+        span.append(button);
       }
       // Remove the tooltip
       tooltip.remove();
     });
-    let removeOption = document.createElement("div");
-    removeOption.className = "annotation-tooltip-option";
-    removeOption.textContent = "Remove";
-    removeOption.addEventListener("click", function() {
-      // When the user clicks on the remove option, send a message to the background script to remove the annotation
-      chrome.runtime.sendMessage({type: "removeAnnotation", data: annotation});
-      // Remove the span
-      span.remove();
-      // Remove the tooltip
-      tooltip.remove();
-    });
-    tooltip.append(editOption, removeOption);
-    document.body.append(tooltip);
-    // Remove the tooltip when the user clicks anywhere else
-    document.addEventListener("click", function handler() {
-      tooltip.remove();
-      document.removeEventListener("click", handler);
-    });
   });
-  // Add an event listener for the mouseenter event on the span element
-  span.addEventListener("mouseenter", function() {
-    // Call the highlightElement function with the element that the annotation refers to and the hover color as arguments
+
+  span.addEventListener("mouseenter", () => {
+    deleteButton.style.display = "inline-block";
     let element = document.querySelector(annotation.selector);
     if (element) {
       highlightElement(element, hoverColor);
     }
   });
-  // Add an event listener for the mouseleave event on the span element
-  span.addEventListener("mouseleave", function() {
-    // Call the unhighlightElement function with the element that the annotation refers to as an argument
+  
+  span.addEventListener("mouseleave", () => {
+    deleteButton.style.display = "none";
     let element = document.querySelector(annotation.selector);
     if (element) {
       unhighlightElement(element);
     }
   });
+
+  deleteButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const element = document.querySelector(annotation.selector);
+    if (element) {
+      unhighlightElement(element);
+    }
+    
+    span.remove();
+    chrome.runtime.sendMessage({ type: "removeAnnotation", data: annotation });
+  });
+
   return span;
 }
 

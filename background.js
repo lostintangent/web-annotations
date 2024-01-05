@@ -54,6 +54,18 @@ function importAnnotations(file) {
   reader.readAsText(file);
 }
 
+async function updateActionButtonBadge() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const url = tab.url;
+  const filteredAnnotations = data.annotations.filter(item => item.url === url);
+
+  chrome.action.setBadgeText({ text: filteredAnnotations.length.toString(), tabId: tab.id });
+  chrome.action.setBadgeBackgroundColor({ color: data.hoverColor });
+  if (filteredAnnotations.length === 0 || !url.startsWith("http")) {
+    chrome.action.setBadgeText({ text: "" });
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     /*
@@ -72,6 +84,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "setHoverColor":
       data.hoverColor = message.data;
       sendHoverColorToContentScript();
+      updateActionButtonBadge();
       saveData();
       break;
 
@@ -88,11 +101,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
      */
     case "addAnnotation": // The user just added a new annotation to the page
       data.annotations.push(message.data);
+      updateActionButtonBadge();
       saveData();
       break;
 
     case "removeAnnotation": // The user just deleted an annotation from the page
       data.annotations = data.annotations.filter(item => item !== message.data);
+      updateActionButtonBadge();
       saveData();
       break;
 
@@ -107,15 +122,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  await ensureDataIsLoaded();
-
-  data.recordMode = false;
-
   if (changeInfo.status === "complete") {
+    await ensureDataIsLoaded();
+    data.recordMode = false;
+  
     const url = tab.url;
     const filteredAnnotations = data.annotations.filter(item => item.url === url);
 
     sendAnnotationsToContentScript(filteredAnnotations);
     sendHoverColorToContentScript();
+    updateActionButtonBadge();
   }
 });

@@ -17,6 +17,13 @@ function createSpan(annotation) {
   span.dataset.selector = annotation.selector;
   span.dataset.color = hoverColor;
 
+  const editButton = document.createElement("button");
+  editButton.textContent = "\u{270F}"; // Pencil emoji
+  editButton.style.display = "none";
+  editButton.style.marginLeft = "5px";
+  editButton.style.cursor = "pointer";
+  span.append(editButton);
+
   const deleteButton = document.createElement("button");
   deleteButton.textContent = "\u{1F5D1}"; // Wastebasket emoji
   deleteButton.style.display = "none";
@@ -24,33 +31,8 @@ function createSpan(annotation) {
   deleteButton.style.cursor = "pointer";
   span.append(deleteButton);
 
-  span.addEventListener("click", (e) => {
-    e.stopPropagation();
-    
-    let tooltip = document.createElement("div");
-    tooltip.className = "annotation-tooltip";
-    tooltip.style.left = e.pageX + "px";
-    tooltip.style.top = e.pageY + "px";
-    let editOption = document.createElement("div");
-    editOption.className = "annotation-tooltip-option";
-    editOption.textContent = "Edit";
-    editOption.addEventListener("click", function() {
-      // When the user clicks on the edit option, show a prompt to edit the annotation text
-      let newText = prompt("Edit the annotation text:", annotation.text);
-      if (newText && newText !== annotation.text) {
-        // If the user enters a new text, send a message to the background script to edit the annotation
-        chrome.runtime.sendMessage({type: "editAnnotation", data: {old: annotation, new: {...annotation, text: newText}}});
-        // Update the span text
-        span.textContent = newText;
-        // Re-append the button to the span
-        span.append(button);
-      }
-      // Remove the tooltip
-      tooltip.remove();
-    });
-  });
-
   span.addEventListener("mouseenter", () => {
+    editButton.style.display = "inline-block";
     deleteButton.style.display = "inline-block";
     let element = document.querySelector(annotation.selector);
     if (element) {
@@ -59,8 +41,26 @@ function createSpan(annotation) {
   });
   
   span.addEventListener("mouseleave", () => {
+    editButton.style.display = "none";
     deleteButton.style.display = "none";
-    let element = document.querySelector(annotation.selector);
+
+    const element = document.querySelector(annotation.selector);
+    if (element) {
+      unhighlightElement(element);
+    }
+  });
+
+  editButton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const newText = prompt("Edit the annotation text:", annotation.text);
+    if (newText && newText !== annotation.text) {
+      span.textContent = newText;
+      chrome.runtime.sendMessage({ type: "editAnnotation", data: { annotation, text: newText }});
+    }
+
+    const element = document.querySelector(annotation.selector);
     if (element) {
       unhighlightElement(element);
     }
@@ -74,7 +74,7 @@ function createSpan(annotation) {
     if (element) {
       unhighlightElement(element);
     }
-    
+
     span.remove();
     chrome.runtime.sendMessage({ type: "removeAnnotation", data: annotation });
   });

@@ -1,18 +1,9 @@
-// The content script that manages displaying and editing the annotations on the web page, and also enables the record mode.
-
-// A variable to store the annotations as an array of objects with the same properties as in the background script
 let annotations = [];
-
-// A variable to store the record mode status as a boolean
 let recordMode = false;
+let hoverColor = "blue";
 
-// A variable to store the hover color as a string
-let hoverColor = "blue"; // default value
-
-// A variable to store the currently hovered element
 let hoveredElement = null;
 
-// A function to create a span element for each annotation
 function createSpan(annotation) {
   let span = document.createElement("span");
   span.className = "annotation-span";
@@ -102,7 +93,6 @@ function positionSpan(span, element) {
   span.style.left = `${leftPosition}px`;
 }
 
-// A function to display the annotations on the web page
 function displayAnnotations() {
   // Remove any existing spans
   let existingSpans = document.querySelectorAll(".annotation-span");
@@ -129,7 +119,6 @@ function displayAnnotations() {
   }
 }
 
-// A function to create a color picker element
 function createColorPicker() {
   let colorPicker = document.createElement("div");
   colorPicker.className = "color-picker";
@@ -153,67 +142,63 @@ function createColorPicker() {
   return colorPicker;
 }
 
-// A function to handle the record mode click
 function handleRecordModeClick(e) {
-  // If the record mode is enabled and the user clicks on an element, show a prompt to enter the annotation text
-  if (recordMode) {
-    e.stopPropagation();
-    e.preventDefault();
-    // Remove the outline from the hovered element
-    if (hoveredElement) {
-      hoveredElement.style.outline = "";
-      hoveredElement = null;
-    }
-    let text = prompt("Enter the annotation text:");
-    if (text) {
-      const selector = getCssSelector(e.target)
-          let annotation = {
-            text,
-            url: window.location.href,
-            selector
-          };
-          // Send a message to the background script to add the annotation
-          chrome.runtime.sendMessage({type: "addAnnotation", data: annotation});
-          annotations.push(message.data); // update the annotations array
-          displayAnnotations(); 
-    }
+  if (!recordMode) return;
+
+  e.stopPropagation();
+  e.preventDefault();
+  
+  if (hoveredElement) {
+    unhighlightElement(hoveredElement);
+  }
+
+  const text = prompt("Enter the annotation text:");
+  if (text) {
+    const selector = getCssSelector(e.target)
+    const annotation = {
+      text,
+      url: window.location.href,
+      selector
+    };
+
+    annotations.push(annotation);
+    displayAnnotations(); 
+
+    chrome.runtime.sendMessage({ type: "addAnnotation", data: annotation });
   }
 }
 
 function handleRecordModeHover(e) {
-  if (recordMode) {
-    if (hoveredElement && e.target !== hoveredElement) {
-      unhighlightElement(hoveredElement);
-    }
+  if (!recordMode) return;
 
-    if (e.target.classList.contains("annotation-span")) {
-      return;
-    }
-
-    highlightElement(e.target, hoverColor);
-    hoveredElement = e.target;
+  if (hoveredElement && e.target !== hoveredElement) {
+    unhighlightElement(hoveredElement);
   }
+
+  if (e.target.classList.contains("annotation-span")) {
+    return;
+  }
+
+  highlightElement(e.target, hoverColor);
 }
 
-// A function to get the CSS selector of an element
 function getCssSelector(element) {
-  // If the element has an id, return the id selector
   if (element.id) {
-    return "#" + element.id;
+    return `#${element.id}`;
   }
+
   if (element.classList) {
     for (let className of element.classList) {
       const matches = document.querySelectorAll("." + className);
       if (matches && matches.length === 1) {
-        return "." + className;
+        return `.${className}`;
       }
     }
   }
-  // If the element is the body, return the tag name
   if (element.tagName === "BODY") {
     return "body";
   }
-  // Otherwise, get the index of the element among its siblings of the same tag name
+
   let index = 1;
   let sibling = element.previousElementSibling;
   while (sibling) {
@@ -222,52 +207,44 @@ function getCssSelector(element) {
     }
     sibling = sibling.previousElementSibling;
   }
-  // Return the selector of the parent element, followed by the tag name and the index in parentheses
   return getCssSelector(element.parentElement) + " > " + element.tagName + ":nth-of-type(" + index + ")";
 }
 
-// A function to highlight an element with a given color
 function highlightElement(element, color) {
-  // Set the element's outline to a 5px solid border with the given color
+  hoveredElement = element;
   element.style.outline = "5px solid " + color;
 }
 
-// A function to unhighlight an element
 function unhighlightElement(element) {
-  // Remove the element's outline
   element.style.outline = "";
 }
 
-// Add event listeners to the document to handle the record mode click and hover
 document.addEventListener("click", handleRecordModeClick);
 document.addEventListener("mouseover", handleRecordModeHover);
 
-// Listen for messages from the background script
-chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
-    case "annotations":
-      // The background script sends the annotations
+    /*
+     * Sender = Background script
+     */
+    case "annotations": // We're being provided with annotations for the current page
       annotations = message.data;
       displayAnnotations();
       break;
-    case "recordMode":
+
+    case "recordMode": // The user has toggeled the record mode
       if (recordMode && !message.data && hoveredElement) {
         hoveredElement.style.outline = "";
         hoveredElement = null;
       }
-
-      // The background script sends the record mode status
       recordMode = message.data;
-      
       break;
-    case "hoverColor":
-      // The background script sends the hover color
+
+    case "hoverColor": // The user has changed the hover color
       hoverColor = message.data;
-      // Call the highlightElement function with the hovered element and the new color as arguments, if the hovered element is not null and the record mode is enabled
       if (hoveredElement && recordMode) {
         highlightElement(hoveredElement, hoverColor);
       }
-      // If there are any existing annotations, call the displayAnnotations function to redisplay them with the new color
       if (annotations.length > 0) {
         displayAnnotations();
       }

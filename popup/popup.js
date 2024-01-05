@@ -162,19 +162,15 @@ function updateHoverColorPicker(color) {
   }
 }
 
-// Add event listeners to the buttons and the checkbox
 document.getElementById("export-button").addEventListener("click", handleExportButtonClick);
 document.getElementById("import-button").addEventListener("click", handleImportButtonClick);
 document.getElementById("import-file").addEventListener("change", handleFileInputChange);
 document.getElementById("record-mode-checkbox").addEventListener("change", handleRecordModeCheckboxChange);
 
-// Create and append the hover color picker element
 let hoverColorPicker = createHoverColorPicker();
 document.getElementById("hover-color").append(hoverColorPicker);
 
-// Add an event listener to the hover color picker to handle the color selection
 hoverColorPicker.addEventListener("click", function(e) {
-  // If the user clicks on a color option, get the color from the data attribute and call the handleHoverColorChange function
   if (e.target.classList.contains("color-option")) {
     let color = e.target.dataset.color;
     updateHoverColorPicker(color);
@@ -182,8 +178,7 @@ hoverColorPicker.addEventListener("click", function(e) {
   }
 });
 
-// Request the data from the background script and use it to populate the annotation list, the record mode checkbox, and the hover color picker
-chrome.runtime.sendMessage({type: "getData"}, function(response) {
+chrome.runtime.sendMessage({ type: "getData" }).then((response) => {
   populateAnnotationList(response.annotations);
   updateRecordModeCheckbox(response.recordMode);
   updateHoverColorPicker(response.hoverColor);

@@ -104,7 +104,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
 
     case "removeAnnotation": // The user just deleted an annotation from the page
-      data.annotations = data.annotations.filter(item => item !== message.data);
+      data.annotations = data.annotations.filter(item => item.url !== message.data.url || item.selector !== message.data.selector && item.text !== message.data.text);
       updateActionButtonBadge();
       saveData();
       break;

@@ -265,8 +265,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     /*
      * Sender = Background script
      */
-    case "annotations": // We're being provided with annotations for the current page
-      annotations = message.data;
+    case "init": // We're being initialized with annotations and hover color for the current page
+      annotations = message.data.annotations;
+      hoverColor = message.data.hoverColor;
       displayAnnotations();
       break;
 

@@ -26,7 +26,7 @@ async function sendMessageToContentScript(type, data) {
   chrome.tabs.sendMessage(tab.id, { type, data });
 }
 
-const sendAnnotationsToContentScript = (annotations = data.annnotations) => sendMessageToContentScript("annotations", annotations);
+const initializeContentScript = (annotations = data.annnotations) => sendMessageToContentScript("init", { annotations, hoverColor: data.hoverColor });
 const sendHoverColorToContentScript = () => sendMessageToContentScript("hoverColor", data.hoverColor);
 
 function exportAnnotations() {
@@ -133,8 +133,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     const url = tab.url;
     const filteredAnnotations = data.annotations.filter(item => item.url === url);
 
-    sendAnnotationsToContentScript(filteredAnnotations);
-    sendHoverColorToContentScript();
+    initializeContentScript(filteredAnnotations);
     updateActionButtonBadge();
   }
 });

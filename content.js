@@ -101,32 +101,6 @@ function positionSpan(span, element) {
   span.style.left = `${leftPosition}px`;
 }
 
-function displayAnnotations() {
-  // Remove any existing spans
-  let existingSpans = document.querySelectorAll(".annotation-span");
-  for (let span of existingSpans) {
-    span.remove();
-  }
-  // Create and append a new span for each annotation that matches the current URL
-  for (let annotation of annotations) {
-    if (annotation.url === window.location.href) {
-      let element = document.querySelector(annotation.selector);
-      if (element) {
-        let span = createSpan(annotation);
-        document.body.append(span);
-        positionSpan(span, element);
-        // Reposition the span when the window is resized or scrolled
-        window.addEventListener("resize", function() {
-          positionSpan(span, element);
-        });
-        window.addEventListener("scroll", function() {
-          positionSpan(span, element);
-        });
-      }
-    }
-  }
-}
-
 function createColorPicker() {
   let colorPicker = document.createElement("div");
   colorPicker.className = "color-picker";
@@ -225,6 +199,62 @@ function highlightElement(element, color) {
 
 function unhighlightElement(element) {
   element.style.outline = "";
+}
+
+const MAX_WAIT_TIME = 5000;
+async function waitForElement(annotation) {
+  return new Promise((resolve, reject) => {
+    let element = document.querySelector(annotation.selector);
+    if (element) {
+      return resolve(element);
+    }
+  
+    const timer = setTimeout(() => {
+      reject(`Element not found for annotation: ${annotation.text}`);
+    }, MAX_WAIT_TIME);
+
+    // TODO: 
+    const observer = new MutationObserver((mutations, observer) => {
+      element = document.querySelector(annotation.selector);
+        if (element) {
+          clearTimeout(timer);
+          observer.disconnect();
+          resolve(element);
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  });
+}
+
+async function displayAnnotation(annotation) {
+  try {
+    const element = await waitForElement(annotation);
+    
+    const span = createSpan(annotation);
+    document.body.append(span);
+    positionSpan(span, element);
+
+    const reposition = () => positionSpan(span, element);
+
+    // TODO: Refactor this into a single handler that
+    // repositions all active annotations.
+    window.addEventListener("resize", reposition);
+    window.addEventListener("scroll", reposition);
+  } catch (e) {
+    console.log("Annotation not found: ", annotation);
+
+    // TODO: Show an error about this element in the popup view
+  }
+}
+
+function displayAnnotations() {
+  const existingSpans = document.querySelectorAll(".annotation-span");
+  for (let span of existingSpans) {
+    span.remove();
+  }
+  
+  annotations.forEach(displayAnnotation);
 }
 
 document.addEventListener("click", handleRecordModeClick);

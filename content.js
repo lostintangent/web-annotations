@@ -13,9 +13,7 @@ function createSpan(annotation) {
   span.style.padding = "5px";
   span.style.borderRadius = "5px";
   span.textContent = annotation.text;
-  span.dataset.url = annotation.url;
   span.dataset.selector = annotation.selector;
-  span.dataset.color = hoverColor;
 
   const editButton = document.createElement("button");
   editButton.textContent = "\u{270F}"; // Pencil emoji
@@ -99,29 +97,6 @@ function positionSpan(span, element) {
 
   span.style.top = `${topPosition}px`;
   span.style.left = `${leftPosition}px`;
-}
-
-function createColorPicker() {
-  let colorPicker = document.createElement("div");
-  colorPicker.className = "color-picker";
-  colorPicker.style.position = "absolute";
-  colorPicker.style.zIndex = "9999";
-  colorPicker.style.display = "flex";
-  colorPicker.style.flexWrap = "wrap";
-  colorPicker.style.width = "100px";
-  colorPicker.style.border = "1px solid gray";
-  colorPicker.style.backgroundColor = "white";
-  // Create and append a color option element for each color in the palette
-  for (let color of colors) {
-    let colorOption = document.createElement("div");
-    colorOption.className = "color-option";
-    colorOption.style.width = "20px";
-    colorOption.style.height = "20px";
-    colorOption.style.backgroundColor = color;
-    colorOption.dataset.color = color;
-    colorPicker.append(colorOption);
-  }
-  return colorPicker;
 }
 
 function handleRecordModeClick(e) {
@@ -260,41 +235,46 @@ function displayAnnotations() {
 document.addEventListener("click", handleRecordModeClick);
 document.addEventListener("mouseover", handleRecordModeHover);
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  switch (message.type) {
+function enumerateAnnotations(handler) {
+  const annnotations = document.querySelectorAll(".annotation-span");
+  annnotations.forEach(handler);
+}
+
+chrome.runtime.onMessage.addListener(({ type, data }) => {
+  switch (type) {
     /*
      * Sender = Background script
      */
     case "init": // We're being initialized with annotations and hover color for the current page
-      annotations = message.data.annotations;
-      hoverColor = message.data.hoverColor;
+      annotations = data.annotations;
+      hoverColor = data.hoverColor;
+      
       displayAnnotations();
       break;
 
     case "recordMode": // The user has toggeled the record mode
-      if (recordMode && !message.data && hoveredElement) {
+      if (recordMode && !data && hoveredElement) {
         hoveredElement.style.outline = "";
         hoveredElement = null;
       }
-      recordMode = message.data;
+
+      recordMode = data;
+      
       break;
 
     case "hoverColor": // The user has changed the hover color
-      hoverColor = message.data;
+      hoverColor = data;
+
       if (hoveredElement && recordMode) {
         highlightElement(hoveredElement, hoverColor);
       }
-      if (annotations.length > 0) {
-        displayAnnotations();
-      }
+      enumerateAnnotations((annotation) => { annotation.style.backgroundColor = hoverColor; });
       break;
 
     case "clearAnnotations": // The user has cleared the annotations
       annotations = [];
-      const existingSpans = document.querySelectorAll(".annotation-span");
-      for (let span of existingSpans) {
-        span.remove();
-      }
+
+      enumerateAnnotations((annotation) => annotation.remove());
       break;
   }
 });

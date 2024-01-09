@@ -232,8 +232,8 @@ function displayAnnotations() {
   annotations.forEach(displayAnnotation);
 }
 
-document.addEventListener("click", handleRecordModeClick);
-document.addEventListener("mouseover", handleRecordModeHover);
+document.addEventListener("click", handleRecordModeClick, { capture: true });
+document.addEventListener("mouseover", handleRecordModeHover, { capture: true });
 
 function enumerateAnnotations(handler) {
   const annnotations = document.querySelectorAll(".annotation-span");

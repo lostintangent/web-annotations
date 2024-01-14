@@ -30,7 +30,7 @@ const initializeContentScript = (annotations = data.annnotations) => sendMessage
 const sendHoverColorToContentScript = () => sendMessageToContentScript("hoverColor", data.hoverColor);
 
 function exportAnnotations() {
-  const url = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data.annotations))}`
+  const url = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data.annotations, null, 2))}`
   chrome.downloads.download({ url, filename: "annotations.json", saveAs: true });
 }
 
@@ -39,7 +39,7 @@ function importAnnotations(file) {
   reader.onload = async function (e) {
     try {
       let annotations = JSON.parse(e.target.result);
-      if (Array.isArray(annotations) && annotations.every(item => item.url && item.text && item.selector && item.color)) {
+      if (Array.isArray(annotations) && annotations.every(item => item.url && item.text && item.selector && item.date)) {
         data.annotations = annotations;
         await saveData();
         await sendAnnotationsToContentScript();

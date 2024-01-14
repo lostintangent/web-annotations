@@ -67,7 +67,29 @@ function createListItem(annotation) {
       document.removeEventListener("click", handler);
     });
   });
+
+  const dateSpan = document.createElement("span");
+  dateSpan.style.color = "grey";
+  dateSpan.style.marginLeft = "10px";
+  dateSpan.textContent = "(" + formatDate(annotation.date) + ")";
+  li.append(dateSpan);
+
   return li;
+}
+
+// TODO: Clean up this parsing logic
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  let month = date.getMonth() + 1;
+  let day = date.getDate();
+  let year = date.getFullYear();
+  let hours = date.getHours();
+  let minutes = date.getMinutes();
+  let ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+  return month + "/" + day + "/" + year + " " + hours + ":" + minutes + " " + ampm;
 }
 
 // A function to populate the annotation list with the annotations from the background script
@@ -75,6 +97,8 @@ function populateAnnotationList(annotations) {
   let ul = document.getElementById("annotation-list-ul");
   // Clear the existing list items
   ul.innerHTML = "";
+
+  annotations.sort((a, b) => b.date - a.date);
   // Create and append a new list item for each annotation
   for (let annotation of annotations) {
     let li = createListItem(annotation);

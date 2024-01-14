@@ -115,7 +115,8 @@ function handleRecordModeClick(e) {
     const annotation = {
       text,
       url: window.location.href,
-      selector
+      selector,
+      date: Date.now()
     };
 
     annotations.push(annotation);

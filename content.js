@@ -140,16 +140,20 @@ function handleRecordModeHover(e) {
   highlightElement(e.target, hoverColor);
 }
 
+function escapeSelector(str) {
+  return str.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+}
+
 function getCssSelector(element) {
   if (element.id) {
-    return `#${element.id}`;
+    return `#${escapeSelector(element.id)}`;
   }
 
   if (element.classList) {
     for (let className of element.classList) {
-      const matches = document.querySelectorAll("." + className);
+      const matches = document.querySelectorAll("." + escapeSelector(className));
       if (matches && matches.length === 1) {
-        return `.${className}`;
+        return `.${escapeSelector(className)}`;
       }
     }
   }

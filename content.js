@@ -54,7 +54,8 @@ function createSpan(annotation) {
 
     const newText = prompt("Edit the annotation text:", annotation.text);
     if (newText && newText !== annotation.text) {
-      span.textContent = newText;
+      annotation.text = newText;
+      span.firstChild.textContent = newText;
       chrome.runtime.sendMessage({ type: "editAnnotation", data: { annotation, text: newText }});
     }
 

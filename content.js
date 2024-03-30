@@ -208,6 +208,18 @@ async function waitForElement(annotation) {
   });
 }
 
+// Add a helper function to find the closest scrollable parent/ancestor of an element
+function getScrollableParent(element) {
+  let parent = element.parentElement;
+  while (parent) {
+    if (parent.scrollHeight > parent.clientHeight || parent.scrollWidth > parent.clientWidth) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  return window;
+}
+
 async function displayAnnotation(annotation) {
   try {
     const element = await waitForElement(annotation);
@@ -222,6 +234,14 @@ async function displayAnnotation(annotation) {
     // repositions all active annotations.
     window.addEventListener("resize", reposition);
     window.addEventListener("scroll", reposition);
+
+    // Add scroll and resize event listeners to the scrollable parent/ancestor of each annotated element
+    const scrollableParent = getScrollableParent(element);
+    scrollableParent.addEventListener("scroll", reposition);
+    scrollableParent.addEventListener("resize", reposition);
+
+    // Add a property to each annotation object to store a reference to the scrollable parent/ancestor of the annotated element
+    annotation.scrollableParent = scrollableParent;
   } catch (e) {
     console.log("Annotation not found: ", annotation);
 
@@ -281,6 +301,17 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
       annotations = [];
 
       enumerateAnnotations((annotation) => annotation.remove());
+      break;
+
+    case "removeAnnotation": // The user has removed an annotation
+      // Remove scroll and resize event listeners from the scrollable parent/ancestor of the annotation
+      const annotation = data;
+      const scrollableParent = annotation.scrollableParent;
+      if (scrollableParent) {
+        const reposition = () => positionSpan(span, element);
+        scrollableParent.removeEventListener("scroll", reposition);
+        scrollableParent.removeEventListener("resize", reposition);
+      }
       break;
   }
 });

@@ -1,13 +1,13 @@
 let annotations = [];
 let recordMode = false;
-let hoverColor = "blue";
+let annotationColor = "blue";
 
 let hoveredElement = null;
 
 function createSpan(annotation) {
   let span = document.createElement("span");
   span.className = "annotation-span";
-  span.style.backgroundColor = hoverColor;
+  span.style.backgroundColor = annotationColor;
   span.style.position = "absolute";
   span.style.zIndex = "9999";
   span.style.padding = "5px";
@@ -34,7 +34,7 @@ function createSpan(annotation) {
     deleteButton.style.display = "inline-block";
     let element = document.querySelector(annotation.selector);
     if (element) {
-      highlightElement(element, hoverColor);
+      highlightElement(element, annotationColor);
     }
   });
   
@@ -138,7 +138,7 @@ function handleRecordModeHover(e) {
     return;
   }
 
-  highlightElement(e.target, hoverColor);
+  highlightElement(e.target, annotationColor);
 }
 
 function escapeSelector(str) {
@@ -251,9 +251,9 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
     /*
      * Sender = Background script
      */
-    case "init": // We're being initialized with annotations and hover color for the current page
+    case "init": // We're being initialized with annotations and annotation color for the current page
       annotations = data.annotations;
-      hoverColor = data.hoverColor;
+      annotationColor = data.annotationColor;
       
       displayAnnotations();
       break;
@@ -268,13 +268,13 @@ chrome.runtime.onMessage.addListener(({ type, data }) => {
       
       break;
 
-    case "hoverColor": // The user has changed the hover color
-      hoverColor = data;
+    case "annotationColor": // The user has changed the annotation color
+      annotationColor = data;
 
       if (hoveredElement && recordMode) {
-        highlightElement(hoveredElement, hoverColor);
+        highlightElement(hoveredElement, annotationColor);
       }
-      enumerateAnnotations((annotation) => { annotation.style.backgroundColor = hoverColor; });
+      enumerateAnnotations((annotation) => { annotation.style.backgroundColor = annotationColor; });
       break;
 
     case "clearAnnotations": // The user has cleared the annotations

@@ -1,13 +1,13 @@
 let data = null;
 async function ensureDataIsLoaded() {
   if (!data) {
-    const { annotations, hoverColor } = await chrome.storage.local.get(["annotations", "hoverColor"]);
+    const { annotations, annotationColor } = await chrome.storage.local.get(["annotations", "annotationColor"]);
     const { recordMode } = await chrome.storage.session.get("recordMode");
 
     data = {
       annotations: annotations || [],
       recordMode: recordMode || false,
-      hoverColor: hoverColor || "blue"
+      annotationColor: annotationColor || "blue"
     };
   }
 }
@@ -15,7 +15,7 @@ async function ensureDataIsLoaded() {
 async function saveData() {
   await chrome.storage.local.set({
     annotations: data.annotations,
-    hoverColor: data.hoverColor
+    annotationColor: data.annotationColor
   });
 
   await chrome.storage.session.set({ recordMode: data.recordMode });
@@ -26,8 +26,8 @@ async function sendMessageToContentScript(type, data) {
   chrome.tabs.sendMessage(tab.id, { type, data });
 }
 
-const initializeContentScript = (annotations = data.annnotations) => sendMessageToContentScript("init", { annotations, hoverColor: data.hoverColor });
-const sendHoverColorToContentScript = () => sendMessageToContentScript("hoverColor", data.hoverColor);
+const initializeContentScript = (annotations = data.annnotations) => sendMessageToContentScript("init", { annotations, annotationColor: data.annotationColor });
+const sendAnnotationColorToContentScript = () => sendMessageToContentScript("annotationColor", data.annotationColor);
 
 function exportAnnotations() {
   const url = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data.annotations, null, 2))}`
@@ -60,7 +60,7 @@ async function updateActionButtonBadge() {
 
   const text = filteredAnnotations.length > 0 ? filteredAnnotations.length.toString() : "";
   chrome.action.setBadgeText({ text, tabId: tab.id });
-  chrome.action.setBadgeBackgroundColor({ color: data.hoverColor });
+  chrome.action.setBadgeBackgroundColor({ color: data.annotationColor });
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -78,9 +78,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       saveData();
       break;
 
-    case "setHoverColor":
-      data.hoverColor = message.data;
-      sendHoverColorToContentScript();
+    case "setAnnotationColor":
+      data.annotationColor = message.data;
+      sendAnnotationColorToContentScript();
       updateActionButtonBadge();
       saveData();
       break;

@@ -1,0 +1,23 @@
+{
+  "name": "web-annotations",
+  "version": "1.0.0",
+  "description": "A browser extension for displaying, recording, and sharing visual annotations for web page",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean && mkdir -p dist/popup && cp popup/*.{html,css} dist/popup/ && cp manifest.json dist/ && cp node_modules/webextension-polyfill/dist/browser-polyfill.js dist/",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Jonathan Carter",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chrome": "^0.0.300",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@types/webextension-polyfill": "^0.12.1",
+    "webextension-polyfill": "^0.12.0"
+  }
+}

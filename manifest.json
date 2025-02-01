@@ -9,6 +9,9 @@
     "scripting",
     "tabs"
   ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "action": {
     "default_popup": "popup/popup.html",
     "default_title": "Web Annotations"
@@ -19,7 +22,8 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["browser-polyfill.js"],
+      "run_at": "document_start"
     }
   ]
 }

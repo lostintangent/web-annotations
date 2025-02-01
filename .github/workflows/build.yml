@@ -15,13 +15,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '18'
 
       - name: Install Dependencies
         run: npm install
 
+      - name: Build Extension
+        run: npm run build
+
       - name: Bundle Extension
-        run: zip -r extension.zip . -x "*.git*"
+        run: |
+          cd dist
+          zip -r ../extension.zip .
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
